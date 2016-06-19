@@ -1,0 +1,8 @@
+- address:
+    type: upnp
+  dns:
+    type: dozens
+    params:
+      user: moguno 
+      key: hoge
+      domain: araaraufufu.click

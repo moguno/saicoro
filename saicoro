@@ -1,0 +1,33 @@
+#! /usr/bin/env ruby
+
+require "yaml"
+
+@address_procs = {}
+@dns_procs = {}
+
+def address(slug, &block)
+	@address_procs[slug] = block
+end
+
+def dns(slug, &block)
+	@dns_procs[slug] = block
+end
+
+Dir.glob(File.join(__dir__, "address_*.rb")) { |filename|
+	require filename
+}
+
+Dir.glob(File.join(__dir__, "dns_*.rb")) { |filename|
+	require filename
+}
+
+configs = YAML.load_file("saicoro.conf")
+
+configs.each { |config|
+	address_config = config["address"]
+	dns_config = config["dns"]
+
+	address = @address_procs[address_config["type"].to_sym].(address_config["params"])
+
+	@dns_procs[dns_config["type"].to_sym].(address, dns_config["params"])
+}
