@@ -21,7 +21,7 @@ Dir.glob(File.join(__dir__, "dns_*.rb")) { |filename|
 	require filename
 }
 
-configs = YAML.load_file("saicoro.conf")
+configs = YAML.load_file("/etc/saicoro.conf")
 
 configs.each { |config|
 	address_config = config["address"]
