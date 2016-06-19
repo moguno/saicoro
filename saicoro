@@ -23,11 +23,18 @@ Dir.glob(File.join(__dir__, "dns_*.rb")) { |filename|
 
 configs = YAML.load_file("/etc/saicoro.conf")
 
-configs.each { |config|
-	address_config = config["address"]
-	dns_config = config["dns"]
+Process.daemon
 
-	address = @address_procs[address_config["type"].to_sym].(address_config["params"])
+loop {
+	configs["configs"].each { |config|
+		address = @address_procs[config["address"]["type"].to_sym].(config["address"]["params"])
 
-	@dns_procs[dns_config["type"].to_sym].(address, dns_config["params"])
+		if address != config["prev_address"]
+			@dns_procs[config["dns"]["type"].to_sym].(address, config["dns"]["params"])
+
+			config["prev_address"] = address
+		end
+	}
+
+	sleep(configs["period"])
 }
