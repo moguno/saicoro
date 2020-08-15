@@ -1,0 +1,11 @@
+[Unit]
+Description = Nameserver with API control as DDNS
+
+[Service]
+ExecStart = /opt/saicoro/saicoro
+Restart = always
+Type = simple
+WorkingDirectory = /opt/saicoro/
+
+[Install]
+WantedBy = multi-user.target
