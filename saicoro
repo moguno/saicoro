@@ -1,40 +1,56 @@
 #! /usr/bin/env ruby
 
 require "yaml"
+require "syslog/logger"
 
 @address_procs = {}
 @dns_procs = {}
 
 def address(slug, &block)
-	@address_procs[slug] = block
+  @address_procs[slug] = block
 end
 
 def dns(slug, &block)
-	@dns_procs[slug] = block
+  @dns_procs[slug] = block
 end
 
-Dir.glob(File.join(__dir__, "address_*.rb")) { |filename|
-	require filename
-}
+begin
 
-Dir.glob(File.join(__dir__, "dns_*.rb")) { |filename|
-	require filename
-}
+  Dir.glob(File.join(__dir__, "address_*.rb")) { |filename|
+    require filename
+  }
 
-configs = YAML.load_file("/etc/saicoro.conf")
+  Dir.glob(File.join(__dir__, "dns_*.rb")) { |filename|
+    require filename
+  }
 
-Process.daemon
+  configs = YAML.load_file("/etc/saicoro.conf")
 
-loop {
-	configs["configs"].each { |config|
-		address = @address_procs[config["address"]["type"].to_sym].(config["address"]["params"])
+  log = Syslog::Logger.new("saicoro")
 
-		if address != config["prev_address"]
-			@dns_procs[config["dns"]["type"].to_sym].(address, config["dns"]["params"])
+  # Process.daemon
 
-			config["prev_address"] = address
-		end
-	}
+  loop {
+    begin
+      configs["configs"].each { |config|
+        address = @address_procs[config["address"]["type"].to_sym].(config["address"]["params"])
 
-	sleep(configs["period"])
-}
+        if address != config["prev_address"]
+          log.info("IP address is changed " + address)
+
+          @dns_procs[config["dns"]["type"].to_sym].(address, config["dns"]["params"])
+
+          log.info("DNS record updated " + address)
+
+          config["prev_address"] = address
+        end
+      }
+    rescue => e 
+      log.err(e)
+    end
+
+    sleep(configs["period"])
+  }
+rescue => e
+  log.err(e)
+end
