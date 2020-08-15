@@ -3,6 +3,9 @@ require "net/http"
 require "json"
 require "uri"
 
+class ConohaResourceNotFound < Exception
+end
+
 dns(:conoha) {|address, params|
 	def auth(username, password, tenant_id)
 		req = {
@@ -82,9 +85,17 @@ dns(:conoha) {|address, params|
 			_["name"] == "#{domain}."
 		}
 
+                if target_domain == nil
+                  throw ConohaResourceNotFound.new("Domain " + domain + " is not found");
+                end
+
 		target_record = get_records(token, target_domain).find { |_|
 			_["type"] == "A"
 		}
+
+                if target_record == nil
+                  throw ConohaResourceNotFound.new("A Record is not found");
+                end
 
 		update_record(token, target_domain, target_record, address)
 	end
