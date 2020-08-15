@@ -1,10 +1,11 @@
 period: 1
 configs:
   - address:
-      type: upnp
+      type: inet_ip_info
     dns:
-      type: dozens
+      type: conoha
       params:
-        user: moguno 
-        key: hoge
-        domain: araaraufufu.click
+        username: hoge
+        password: fuga
+        tenant_id: bar
+        domain: example.com
